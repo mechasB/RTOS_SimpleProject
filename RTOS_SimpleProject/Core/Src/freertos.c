@@ -69,7 +69,7 @@ osThreadId_t Bmp280TaskHandle;
 const osThreadAttr_t Bmp280Task_attributes = {
   .name = "Bmp280Task",
   .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* Definitions for OledTask */
 osThreadId_t OledTaskHandle;
@@ -225,6 +225,7 @@ void StartBmp280Task(void *argument)
   /* USER CODE BEGIN StartBmp280Task */
 	BMP280_t Bmp280;
 	BmpData_t _BmpData;
+	uint32_t DelayTick = osKernelGetTickCount();
 
 	osMutexAcquire(MutexI2C1Handle, osWaitForever);
 	BMP280_Init(&Bmp280, &hi2c1, 0x76);
@@ -250,7 +251,8 @@ void StartBmp280Task(void *argument)
 
 	  	  printf("Temperature: %.2f, Pressure: %.2f\n\r", _BmpData.Temperature, _BmpData.Pressure);
 
-	  	  osDelay(10);
+	  	  DelayTick += 10;
+	  	  osDelayUntil(DelayTick);
 
 
   }
@@ -281,10 +283,7 @@ void StartOledTask(void *argument)
 
 	SSD1306_Clear(BLACK);
 
-	osMutexAcquire(MutexI2C1Handle, osWaitForever);
 	SSD1306_Display();
-	osMutexRelease(MutexI2C1Handle);
-
 
   /* Infinite loop */
   for(;;)
@@ -308,9 +307,7 @@ void StartOledTask(void *argument)
 	  	sprintf(Message, "Temp: %.2f", _BmpData.Temperature);
 	  	GFX_DrawString(0, 20, Message, WHITE, 0);
 
-	  	osMutexAcquire(MutexI2C1Handle, osWaitForever);
 	  	SSD1306_Display();
-	  	osMutexRelease(MutexI2C1Handle);
 	  //    osDelay(100);
   }
   /* USER CODE END StartOledTask */
