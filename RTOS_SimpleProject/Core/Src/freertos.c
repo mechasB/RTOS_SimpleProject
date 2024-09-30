@@ -51,7 +51,11 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-float Pressure, Temperature;
+typedef struct
+{
+	float Pressure;
+	float Temperature;
+}BmpData_t;
 /* USER CODE END Variables */
 /* Definitions for HeartbeatTask */
 osThreadId_t HeartbeatTaskHandle;
@@ -74,6 +78,16 @@ const osThreadAttr_t OledTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for QueueBmpData */
+osMessageQueueId_t QueueBmpDataHandle;
+const osMessageQueueAttr_t QueueBmpData_attributes = {
+  .name = "QueueBmpData"
+};
+/* Definitions for TimerBmpData */
+osTimerId_t TimerBmpDataHandle;
+const osTimerAttr_t TimerBmpData_attributes = {
+  .name = "TimerBmpData"
+};
 /* Definitions for MutexPrintf */
 osMutexId_t MutexPrintfHandle;
 const osMutexAttr_t MutexPrintf_attributes = {
@@ -88,6 +102,11 @@ const osMutexAttr_t MutexI2C1_attributes = {
 osMutexId_t MutexBmpDataHandle;
 const osMutexAttr_t MutexBmpData_attributes = {
   .name = "MutexBmpData"
+};
+/* Definitions for SemaphoreBmpQueue */
+osSemaphoreId_t SemaphoreBmpQueueHandle;
+const osSemaphoreAttr_t SemaphoreBmpQueue_attributes = {
+  .name = "SemaphoreBmpQueue"
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -104,6 +123,7 @@ void _putchar(char character)
 void StartHeartbeatTask(void *argument);
 void StartBmp280Task(void *argument);
 void StartOledTask(void *argument);
+void TimerBmpDataCallback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -130,13 +150,25 @@ void MX_FREERTOS_Init(void) {
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
+  /* Create the semaphores(s) */
+  /* creation of SemaphoreBmpQueue */
+  SemaphoreBmpQueueHandle = osSemaphoreNew(1, 0, &SemaphoreBmpQueue_attributes);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* creation of TimerBmpData */
+  TimerBmpDataHandle = osTimerNew(TimerBmpDataCallback, osTimerPeriodic, NULL, &TimerBmpData_attributes);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* creation of QueueBmpData */
+  QueueBmpDataHandle = osMessageQueueNew (8, sizeof(BmpData_t), &QueueBmpData_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -192,27 +224,34 @@ void StartBmp280Task(void *argument)
 {
   /* USER CODE BEGIN StartBmp280Task */
 	BMP280_t Bmp280;
+	BmpData_t _BmpData;
 
 	osMutexAcquire(MutexI2C1Handle, osWaitForever);
 	BMP280_Init(&Bmp280, &hi2c1, 0x76);
 	osMutexRelease(MutexI2C1Handle);
 
-	float _Pressure, _Temperature;
+	osTimerStart(TimerBmpDataHandle, 100);
   /* Infinite loop */
   for(;;)
   {
 	  osMutexAcquire(MutexI2C1Handle, osWaitForever);
-	  BMP280_ReadPressureAndTemperature(&Bmp280, &_Pressure, &_Temperature);
-	  osMutexRelease(MutexI2C1Handle);
+	  	  BMP280_ReadPressureAndTemperature(&Bmp280, &_BmpData.Pressure, &_BmpData.Temperature);
+	  	  osMutexRelease(MutexI2C1Handle);
 
-	  osMutexAcquire(MutexBmpDataHandle, osWaitForever);
-	  Pressure = _Pressure;
-	  Temperature = _Temperature;
-	  osMutexRelease(MutexBmpDataHandle);
+	  	  if(osOK == osSemaphoreAcquire(SemaphoreBmpQueueHandle, 0))
+	  	  {
+	  		  osMessageQueuePut(QueueBmpDataHandle, &_BmpData, 0, osWaitForever);
+	  	  }
 
-	  printf("Temperature: %.2f, Pressure: %.2f\n\r", _Temperature, _Pressure);
+	  //	  osMutexAcquire(MutexBmpDataHandle, osWaitForever);
+	  //	  Pressure = _Pressure;
+	  //	  Temperature = _Temperature;
+	  //	  osMutexRelease(MutexBmpDataHandle);
 
-	  osDelay(10);
+	  	  printf("Temperature: %.2f, Pressure: %.2f\n\r", _BmpData.Temperature, _BmpData.Pressure);
+
+	  	  osDelay(10);
+
 
   }
   /* USER CODE END StartBmp280Task */
@@ -228,50 +267,61 @@ void StartBmp280Task(void *argument)
 void StartOledTask(void *argument)
 {
   /* USER CODE BEGIN StartOledTask */
-		char Message[32];
-		uint8_t i = 0;
+	char Message[32];
+	uint8_t i = 0;
 
-		float _Pressure, _Temperature;
+	BmpData_t _BmpData;
+//	float _Pressure, _Temperature;
 
-		osMutexAcquire(MutexI2C1Handle, osWaitForever);
-		SSD1306_Init(&hi2c1);
-		osMutexRelease(MutexI2C1Handle);
+	osMutexAcquire(MutexI2C1Handle, osWaitForever);
+	SSD1306_Init(&hi2c1);
+	osMutexRelease(MutexI2C1Handle);
 
-		GFX_SetFont(font_8x5);
+	GFX_SetFont(font_8x5);
 
-		SSD1306_Clear(BLACK);
+	SSD1306_Clear(BLACK);
 
-		osMutexAcquire(MutexI2C1Handle, osWaitForever);
-		SSD1306_Display();
-		osMutexRelease(MutexI2C1Handle);
+	osMutexAcquire(MutexI2C1Handle, osWaitForever);
+	SSD1306_Display();
+	osMutexRelease(MutexI2C1Handle);
+
 
   /* Infinite loop */
   for(;;)
   {
-		SSD1306_Clear(BLACK);
+	  SSD1306_Clear(BLACK);
 
-		sprintf(Message, "Hello %d", i++);
+	  	sprintf(Message, "Hello %d", i++);
 
-		GFX_DrawString(0, 0, Message, WHITE, 0);
+	  	GFX_DrawString(0, 0, Message, WHITE, 0);
 
-		osMutexAcquire(MutexBmpDataHandle, osWaitForever);
-		_Pressure = Pressure;
-		_Temperature = Temperature;
-		osMutexRelease(MutexBmpDataHandle);
+	  //	osMutexAcquire(MutexBmpDataHandle, osWaitForever);
+	  //	_Pressure = Pressure;
+	  //	_Temperature = Temperature;
+	  //	osMutexRelease(MutexBmpDataHandle);
 
-		sprintf(Message, "Press: %.2f", _Pressure);
-		GFX_DrawString(0, 10, Message, WHITE, 0);
+	  	osMessageQueueGet(QueueBmpDataHandle, &_BmpData, NULL, osWaitForever);
 
-		sprintf(Message, "Temp: %.2f", _Temperature);
-		GFX_DrawString(0, 20, Message, WHITE, 0);
+	  	sprintf(Message, "Press: %.2f", _BmpData.Pressure);
+	  	GFX_DrawString(0, 10, Message, WHITE, 0);
 
-		osMutexAcquire(MutexI2C1Handle, osWaitForever);
-		SSD1306_Display();
-		osMutexRelease(MutexI2C1Handle);
-	    osDelay(100);
+	  	sprintf(Message, "Temp: %.2f", _BmpData.Temperature);
+	  	GFX_DrawString(0, 20, Message, WHITE, 0);
 
+	  	osMutexAcquire(MutexI2C1Handle, osWaitForever);
+	  	SSD1306_Display();
+	  	osMutexRelease(MutexI2C1Handle);
+	  //    osDelay(100);
   }
   /* USER CODE END StartOledTask */
+}
+
+/* TimerBmpDataCallback function */
+void TimerBmpDataCallback(void *argument)
+{
+  /* USER CODE BEGIN TimerBmpDataCallback */
+	osSemaphoreRelease(SemaphoreBmpQueueHandle);
+  /* USER CODE END TimerBmpDataCallback */
 }
 
 /* Private application code --------------------------------------------------*/
