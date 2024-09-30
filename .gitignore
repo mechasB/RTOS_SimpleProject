@@ -1,0 +1,54 @@
+# Ignoruj pliki binarne
+*.elf
+*.bin
+*.hex
+*.map
+*.lst
+
+# Ignoruj pliki konfiguracyjne edytorów
+.project
+.cproject
+.settings/
+.metadata/
+
+# Ignoruj pliki kompilacji i generowane automatycznie
+/Debug/
+/Release/
+*.o
+*.d
+*.a
+
+# Ignoruj pliki konfiguracyjne buildera
+Makefile
+makefile
+*.launch
+
+# Ignoruj pliki tymczasowe IDE
+*.swp
+*.bak
+*.tmp
+*.user
+*.log
+*.dep
+
+
+# Ignoruj pliki specyficzne dla systemów operacyjnych
+.DS_Store
+Thumbs.db
+
+# Ignoruj pliki specyficzne dla IDE (np. VSCode)
+.vscode/
+
+# Ignoruj pliki binarne skompilowane dla testów
+*.exe
+*.out
+*.axf
+
+# Ignoruj pliki generowane przez CubeIDE, które nie są potrzebne w repo
+*.uvprojx
+*.uvoptx
+*.cproject
+
+# Ignoruj pliki wynikowe Linker Script
+*.ld
+
