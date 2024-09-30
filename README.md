@@ -20,6 +20,6 @@ Hardware:
 - KY037
 
  ## 3. Electrical diagram
-![during assembly](./Photos%20for%20ReadMe/Eletrical diagram.png)
+![during assembly](./Photos%20for%20ReadMe/Eletrical_diagram.png)
 
  ## 4. Project description
