@@ -9,7 +9,7 @@
 .project
 .cproject
 .settings/
-.metadata/
+/.metadata/  # Ignoruj metadata
 
 # Ignoruj pliki kompilacji i generowane automatycznie
 /Debug/
@@ -30,7 +30,6 @@ makefile
 *.user
 *.log
 *.dep
-
 
 # Ignoruj pliki specyficzne dla systemów operacyjnych
 .DS_Store
