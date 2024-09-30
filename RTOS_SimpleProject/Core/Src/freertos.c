@@ -32,6 +32,10 @@
 #include "SSD1306_OLED.h"
 #include "GFX_BW.h"
 #include "fonts/fonts.h"
+#include "arm_math.h"
+#include "tim.h"
+#include "adc.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -78,6 +82,13 @@ const osThreadAttr_t OledTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for FFTTask */
+osThreadId_t FFTTaskHandle;
+const osThreadAttr_t FFTTask_attributes = {
+  .name = "FFTTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
+};
 /* Definitions for QueueBmpData */
 osMessageQueueId_t QueueBmpDataHandle;
 const osMessageQueueAttr_t QueueBmpData_attributes = {
@@ -123,6 +134,7 @@ void _putchar(char character)
 void StartHeartbeatTask(void *argument);
 void StartBmp280Task(void *argument);
 void StartOledTask(void *argument);
+void StartFFTTask(void *argument);
 void TimerBmpDataCallback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -183,6 +195,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of OledTask */
   OledTaskHandle = osThreadNew(StartOledTask, NULL, &OledTask_attributes);
+
+  /* creation of FFTTask */
+  FFTTaskHandle = osThreadNew(StartFFTTask, NULL, &FFTTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -311,6 +326,24 @@ void StartOledTask(void *argument)
 	  //    osDelay(100);
   }
   /* USER CODE END StartOledTask */
+}
+
+/* USER CODE BEGIN Header_StartFFTTask */
+/**
+* @brief Function implementing the FFTTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartFFTTask */
+void StartFFTTask(void *argument)
+{
+  /* USER CODE BEGIN StartFFTTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartFFTTask */
 }
 
 /* TimerBmpDataCallback function */
