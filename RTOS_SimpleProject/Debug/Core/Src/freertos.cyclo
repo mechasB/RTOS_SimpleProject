@@ -1,6 +1,11 @@
-../Core/Src/freertos.c:114:6:_putchar	1
-../Core/Src/freertos.c:135:6:MX_FREERTOS_Init	1
-../Core/Src/freertos.c:204:6:StartHeartbeatTask	1
-../Core/Src/freertos.c:223:6:StartBmp280Task	2
-../Core/Src/freertos.c:267:6:StartOledTask	1
-../Core/Src/freertos.c:320:6:TimerBmpDataCallback	1
+../Core/Src/freertos.c:137:6:_putchar	1
+../Core/Src/freertos.c:146:7:complexABS	1
+../Core/Src/freertos.c:164:6:vApplicationStackOverflowHook	1
+../Core/Src/freertos.c:173:6:vApplicationMallocFailedHook	1
+../Core/Src/freertos.c:193:6:MX_FREERTOS_Init	1
+../Core/Src/freertos.c:268:6:StartHeartbeatTask	1
+../Core/Src/freertos.c:287:6:StartBmp280Task	2
+../Core/Src/freertos.c:332:6:StartOledTask	2
+../Core/Src/freertos.c:403:6:StartFFTTask	4
+../Core/Src/freertos.c:471:6:TimerBmpDataCallback	1
+../Core/Src/freertos.c:480:6:HAL_ADC_ConvCpltCallback	2
