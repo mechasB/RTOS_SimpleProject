@@ -14,6 +14,8 @@
 
 #define SSD1306_TIMEOUT 1000
 
+#define SSD1306_USE_FREERTOS
+
 //
 // Registers
 //
