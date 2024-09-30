@@ -1,0 +1,5 @@
+../Core/Src/freertos.c:85:6:_putchar	1
+../Core/Src/freertos.c:105:6:MX_FREERTOS_Init	1
+../Core/Src/freertos.c:156:6:StartHeartbeatTask	1
+../Core/Src/freertos.c:175:6:StartBmp280Task	1
+../Core/Src/freertos.c:200:6:StartOledTask	1
